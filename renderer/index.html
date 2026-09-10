@@ -166,6 +166,7 @@ tbody tr:hover{background:#FAFBFC}
       <h1 id="ttl">Dashboard</h1>
       <input id="gsearch" type="search" placeholder="Search invoice, customer, show, PAN…" autocomplete="off">
       <button class="btn pri" data-act="new-invoice">New invoice</button>
+      <button class="btn" data-act="signout">Sign out</button>
     </div>
     <div class="wrap" id="view"></div>
   </div>
@@ -1178,6 +1179,8 @@ async function signIn(){
   $('#loginUser').value='';$('#loginPass').value='';
   startApp();
 }
+function signOut(){sessionStorage.removeItem('gstbill.auth');location.reload();}
+document.addEventListener('click',e=>{if(e.target.closest('[data-act="signout"]'))signOut();});
 $('#loginBtn').addEventListener('click',signIn);
 $('#login').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();signIn();}});
 
