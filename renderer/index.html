@@ -98,6 +98,15 @@ tbody tr:hover{background:#FAFBFC}
 #lock.on{display:flex}
 #lock .box{width:280px;text-align:center}
 #lock input{margin:14px 0;text-align:center;letter-spacing:.3em}
+#login{position:fixed;inset:0;background:var(--ink);color:#fff;display:none;align-items:center;justify-content:center;z-index:90}
+#login.on{display:flex}
+#login .box{width:300px}
+#login .brandline{font-family:var(--serif);font-size:22px;font-weight:500;margin-bottom:2px}
+#login .sub{font-size:12px;color:#7E88A0;margin-bottom:20px}
+#login label.f>span{color:#8A92A6}
+#login input{background:#1E2740;border-color:#2C3752;color:#fff}
+#login input:focus{border-color:var(--plum);box-shadow:0 0 0 3px rgba(110,43,82,.45)}
+#loginErr{color:#F0B7B7;margin-top:10px;min-height:18px}
 
 /* ---------- invoice sheet ---------- */
 .sheetwrap{background:#DFE2E9;padding:26px;border-radius:8px}
@@ -163,6 +172,14 @@ tbody tr:hover{background:#FAFBFC}
 </div>
 <div id="veil"><div id="modal"></div></div>
 <div id="toast"></div>
+<div id="login"><div class="box">
+  <div class="brandline">Billing &amp; GST Invoicing</div>
+  <div class="sub">Sign in to continue</div>
+  <label class="f"><span>Username</span><input id="loginUser" autocomplete="username" autocapitalize="off" spellcheck="false"></label>
+  <label class="f"><span>Password</span><input id="loginPass" type="password" autocomplete="current-password"></label>
+  <button class="btn pri" style="width:100%" id="loginBtn">Sign in</button>
+  <div id="loginErr" class="hint"></div>
+</div></div>
 <div id="lock"><div class="box">
   <div style="font-family:var(--serif);font-size:20px">Enter your PIN</div>
   <input id="pinIn" type="password" inputmode="numeric" autocomplete="off">
@@ -1136,10 +1153,38 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal();});
 $('#pinIn').addEventListener('keydown',e=>{if(e.key==='Enter')document.querySelector('[data-act="unlock"]').click();});
 window.addEventListener('beforeunload',e=>{if(MEM&&DB.invoices.length){e.preventDefault();e.returnValue='';}});
 
+/* ===================== sign in ===================== */
+/* Only a PBKDF2-SHA256 digest of the credential lives here; the username and
+   password themselves are never in the source and never leave the browser. */
+const AUTH={salt:'gstbill.auth.v1',iter:200000,
+  hash:'fc455b9331081441a6f423c967daa30b24976aeb40fa31096f8810e669adc35b'};
+async function derive(user,pass){
+  const enc=new TextEncoder();
+  const k=await crypto.subtle.importKey('raw',enc.encode(user.trim().toLowerCase()+':'+pass),'PBKDF2',false,['deriveBits']);
+  const b=await crypto.subtle.deriveBits({name:'PBKDF2',salt:enc.encode(AUTH.salt),iterations:AUTH.iter,hash:'SHA-256'},k,256);
+  return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+function startApp(){
+  $('#login').classList.remove('on');
+  if(DB.settings.pinHash)$('#lock').classList.add('on');
+  route();
+}
+async function signIn(){
+  const btn=$('#loginBtn');btn.disabled=true;$('#loginErr').textContent='';
+  const ok=await derive($('#loginUser').value,$('#loginPass').value)===AUTH.hash;
+  btn.disabled=false;
+  if(!ok){$('#loginErr').textContent='Those details did not match.';$('#loginPass').value='';$('#loginPass').focus();return;}
+  sessionStorage.setItem('gstbill.auth',AUTH.hash);
+  $('#loginUser').value='';$('#loginPass').value='';
+  startApp();
+}
+$('#loginBtn').addEventListener('click',signIn);
+$('#login').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();signIn();}});
+
 /* ===================== start ===================== */
 load();
-if(DB.settings.pinHash)$('#lock').classList.add('on');
-route();
+if(sessionStorage.getItem('gstbill.auth')===AUTH.hash){startApp();}
+else{$('#login').classList.add('on');$('#loginUser').focus();}
 
 /* ===================== desktop shell ===================== */
 if(DESKTOP){
