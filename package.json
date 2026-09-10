@@ -1,0 +1,40 @@
+{
+  "name": "billing-gst-invoicing",
+  "productName": "Billing & GST Invoicing",
+  "version": "1.0.0",
+  "description": "Offline billing, GST invoicing and receivables for Indian professionals",
+  "main": "main.js",
+  "private": true,
+  "author": "Tripti Arora",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "in.triptiarora.billing",
+    "productName": "Billing & GST Invoicing",
+    "files": ["main.js", "preload.js", "storage.js", "renderer/**", "package.json"],
+    "directories": { "output": "dist", "buildResources": "build" },
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Billing & GST Invoicing"
+    },
+    "mac": {
+      "target": [{ "target": "dmg", "arch": ["arm64", "x64"] }],
+      "category": "public.app-category.business"
+    },
+    "dmg": { "title": "Billing & GST Invoicing" }
+  }
+}
